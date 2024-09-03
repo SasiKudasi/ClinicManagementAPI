@@ -21,7 +21,7 @@ namespace ClinicManagementAPI.Controllers
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PatientDto>>> GetPatients(
-            [FromQuery] string sortBy = "FullName",
+            [FromQuery] string sortBy = "Name",
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] bool desc = false)
@@ -31,7 +31,7 @@ namespace ClinicManagementAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<PatientDto>> GetPatient(int id)
+        public async Task<ActionResult<PatientDto>> GetPatient(int id = 1)
         {
             var patient = await _patientService.GetById(id);
             if (patient == null)
@@ -66,7 +66,7 @@ namespace ClinicManagementAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePatient(int id)
+        public async Task<IActionResult> DeletePatient(int id = 1)
         {
             await _patientService.DeleteAsync(id);
             return NoContent();
