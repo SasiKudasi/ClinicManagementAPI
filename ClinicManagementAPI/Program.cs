@@ -10,14 +10,6 @@ using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/* ToDo
- * 1. Cделать какую никакую валидацию
- * 2. база данных
- * 3. Тесты :(
- * 4. посмотреть че по рефакторингу
- */
-// Add services to the container.
-
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
