@@ -1,25 +1,32 @@
 ﻿using ClinicManagementAPI.Application.Contracts;
 using ClinicManagementAPI.Core.Abstraction;
 using ClinicManagementAPI.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 
 namespace ClinicManagementAPI.Application.Services
 {
-	public class DoctorService : ICrudService<DoctorEntity, DoctorDto>
-	{
-		private readonly ICrudRepository<DoctorEntity> _repository;
+    public class DoctorService : ICrudService<DoctorEntity, DoctorDto>
+    {
+        private readonly ICrudRepository<DoctorEntity> _repository;
         private readonly IEntityResolver _entityResolver;
 
-        public DoctorService(ICrudRepository <DoctorEntity> repository, IEntityResolver resolver)
-		{
-			_repository = repository;
-            _entityResolver = resolver;
-		}
-
-        public async Task<DoctorDto> GetById (int id)
+        public DoctorService(ICrudRepository<DoctorEntity> repository, IEntityResolver resolver)
         {
-            
-            var doctor = await _repository.GetByIdAsync(id);
-            return MapToDto(doctor);
+            _repository = repository;
+            _entityResolver = resolver;
+        }
+
+        public async Task<DoctorDto> GetById(int id)
+        {
+
+            var doctor = await _repository.GetWithRelatedDataAsync(
+            d => d.Id == id,
+            d => d.Specialization,
+            d => d.Room,
+            d => d.Region);
+            var doc = doctor.FirstOrDefault();
+            return MapToDto(doc);
         }
 
         public async Task<IEnumerable<DoctorDto>> GetList(
@@ -29,7 +36,11 @@ namespace ClinicManagementAPI.Application.Services
             bool desc = false)
         {
 
-            var doctors = await _repository.GetAsync();
+            var doctors = await _repository.GetWithRelatedDataAsync(
+                           null,
+                           d => d.Specialization,
+                           d => d.Room,
+                           d => d.Region);
 
             var sortedDoctors = sortBy switch
             {
@@ -58,8 +69,8 @@ namespace ClinicManagementAPI.Application.Services
         }
 
         public async Task<DoctorDto> CreateAsync(DoctorDto dto)
-        { 
-              var doc = await MapDtoToEntity(dto);
+        {
+            var doc = await MapDtoToEntity(dto);
             await _repository.PostAsync(doc);
             return MapToDto(doc);
 
@@ -74,6 +85,7 @@ namespace ClinicManagementAPI.Application.Services
         private DoctorDto MapToDto(DoctorEntity entity)
         {
             if (entity == null) return null;
+
 
             return new DoctorDto
             (
@@ -94,7 +106,7 @@ namespace ClinicManagementAPI.Application.Services
                 Id = dto.Id,
                 FullName = dto.FullName,
                 RegionId = await _entityResolver.GetRegionIdAsync(dto.RegionNumber),
-                RoomId = await _entityResolver.GetRegionIdAsync(dto.RoomNumber),
+                RoomId = await _entityResolver.GetRoomIdAsync(dto.RoomNumber),
                 SpecializationId = await _entityResolver.GetSpecializationIdAsync(dto.SpecializationName)
             };
             return entity;

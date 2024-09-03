@@ -4,22 +4,25 @@ using ClinicManagementAPI.DataAccess.Entities;
 
 namespace ClinicManagementAPI.Application.Services
 {
-	public class PatientService : ICrudService<PatientEntity, PatientDto>
+    public class PatientService : ICrudService<PatientEntity, PatientDto>
     {
-		private readonly ICrudRepository<PatientEntity> _repository;
+        private readonly ICrudRepository<PatientEntity> _repository;
         private readonly IEntityResolver _entityResolver;
 
-        public PatientService(ICrudRepository <PatientEntity> repository, IEntityResolver resolver)
-		{
-			_repository = repository;
-            _entityResolver = resolver;
-		}
-
-        public async Task<PatientDto> GetById (int id)
+        public PatientService(ICrudRepository<PatientEntity> repository, IEntityResolver resolver)
         {
-            
-            var patient = await _repository.GetByIdAsync(id);
-            return MapToDto(patient);
+            _repository = repository;
+            _entityResolver = resolver;
+        }
+
+        public async Task<PatientDto> GetById(int id)
+        {
+            var patient = await _repository.GetWithRelatedDataAsync(
+           d => d.Id == id,
+           d => d.Region);
+            var pat = patient.FirstOrDefault();
+            return MapToDto(pat);
+
         }
 
         public async Task<IEnumerable<PatientDto>> GetList(
@@ -28,7 +31,9 @@ namespace ClinicManagementAPI.Application.Services
                                                 int pageSize = 10,
                                                 bool desc = false)
         {
-            var patients = await _repository.GetAsync();
+            var patients = await _repository.GetWithRelatedDataAsync(
+                           null,
+                           d => d.Region);
 
             var sortedPatients = sortBy switch
             {
@@ -60,14 +65,14 @@ namespace ClinicManagementAPI.Application.Services
         }
 
         public async Task<PatientDto> CreateAsync(PatientDto dto)
-        { 
+        {
             var patient = await MapDtoToEntity(dto);
             await _repository.PostAsync(patient);
             return MapToDto(patient);
 
         }
 
-        public async Task DeleteAsync (int id)
+        public async Task DeleteAsync(int id)
         {
             var patient = await _repository.GetByIdAsync(id);
             if (patient != null) await _repository.DeleteAsync(id);
